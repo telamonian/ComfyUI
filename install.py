@@ -2,23 +2,18 @@ from pathlib import Path
 import subprocess
 import sys
 
-cmd_install_torch = [sys.executable, '-m', 'pip', 'install', '-r', 'requirements_torch_amd.txt']
-cmd_compile_top = [sys.executable, '-m', 'uv', 'pip', 'compile', '-q', 'requirements_top.txt', '-o', 'requirements_top.lock', '--override', 'overrides.txt']
-cmd_install_top = [sys.executable, '-m', 'uv', 'pip', 'install', '-r', 'requirements_top.lock', '--verbose']
-
+rocmPytorchUrl = 'https://download.pytorch.org/whl/rocm6.0'
 topName = 'requirements_top'
+
+cmd_compile_top = [sys.executable, '-m', 'uv', 'pip', 'compile', '--extra-index-url', rocmPytorchUrl, '-q', f'{topName}.txt', '-o', f'{topName}.lock', '--override', 'overrides.txt']
+cmd_install_top = [sys.executable, '-m', 'uv', 'pip', 'install', '--extra-index-url', rocmPytorchUrl, '-r', f'{topName}.lock', '--verbose']
+
 
 def run(cmd: list[str], cwd: str):
     """uses check_call to run pip, as reccomended by the pip maintainers.
     see https://pip.pypa.io/en/stable/user_guide/#using-pip-from-your-program"""
 
     subprocess.check_call(cmd, cwd=cwd)
-
-def installTorch(p: Path):
-    """special handling for installing gpu-specific torch. uv doesn't
-    handle --pre correctly, so we just use base pip for this step"""
-
-    run(cmd_install_torch, str(p))
 
 def makeTop(p: Path):
     """write a top-level requirements file that links to the requirements of
@@ -27,6 +22,8 @@ def makeTop(p: Path):
     reqs = p.glob('custom_nodes/[!__pycache__]*/requirements.txt')
 
     with open(f'{topName}.txt', 'w') as f:
+        f.write('# ensure usage of amd/rocm version of pytorch\n')
+        f.write(f'--extra-index-url {rocmPytorchUrl}\n\n')
         f.write('# main comfy ui dependencies\n')
         f.write('-r requirements.txt\n\n')
         f.write('# custom node dependencies\n')
@@ -38,7 +35,9 @@ def makeTop(p: Path):
 def compileTop(p: Path):
     """resolve the top-level requirements into a "lock" file using `uv pip compile`
     (see https://github.com/astral-sh/uv?tab=readme-ov-file#limitations)"""
-
+    
+    # first, clean up
+    (p / f'{topName}.lock').unlink(missing_ok=True)
     run(cmd_compile_top, str(p))
 
 def installTop(p: Path):
@@ -49,7 +48,6 @@ def installTop(p: Path):
 if __name__ == '__main__':
     here = Path('.')
 
-    installTorch(here)
     makeTop(here)
     compileTop(here)
-    installTop(here)
+    # installTop(here)
