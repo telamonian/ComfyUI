@@ -1,3 +1,9 @@
+# for some reason (likely a uv bug in version tag handling) you need to list the torch packages here in order for the correct gpu-specific package to get used
+#torch==2.3.0+rocm6.0
 torch
+torchsde
+torchvision
+
+# add forced resolutions for conflicting packages here
 kornia>=0.7.1
 tqdm>=4.64.0

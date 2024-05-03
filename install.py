@@ -5,7 +5,7 @@ import sys
 rocmPytorchUrl = 'https://download.pytorch.org/whl/rocm6.0'
 topName = 'requirements_top'
 
-cmd_compile_top = [sys.executable, '-m', 'uv', 'pip', 'compile', '--extra-index-url', rocmPytorchUrl, '-q', f'{topName}.txt', '-o', f'{topName}.lock', '--override', 'overrides.txt']
+cmd_compile_top = [sys.executable, '-m', 'uv', 'pip', 'compile', '-q', f'{topName}.txt', '-o', f'{topName}.lock', '--override', 'overrides.txt']
 cmd_install_top = [sys.executable, '-m', 'uv', 'pip', 'install', '--extra-index-url', rocmPytorchUrl, '-r', f'{topName}.lock', '--verbose']
 
 
@@ -50,4 +50,4 @@ if __name__ == '__main__':
 
     makeTop(here)
     compileTop(here)
-    # installTop(here)
+    installTop(here)
