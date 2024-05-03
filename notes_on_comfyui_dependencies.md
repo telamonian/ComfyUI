@@ -14,7 +14,7 @@
 
 ## How custom nodes dependencies could be handled
 - From what I can see, there are 3 related problems with the Python dependencies of custom nodes:
-  - Installing requirements on package at a time causes many problems, especially with complex packages such as `opencv`
+  - Installing requirements 1 package at a time causes many problems, especially with complex packages such as `opencv`
     - Solution: group the requirements of ComfyUI and all custom nodes in one location and resolve them all together
   - Custom nodes usually aren't actual python packages, there's no standardization in how they specify dependencies
     - See eg [ComfyUI_IPAdapter_plus](https://github.com/cubiq/ComfyUI_IPAdapter_plus), which doesn't even have a `requirements.txt`, instead choosing to list deps at a random place in the README
