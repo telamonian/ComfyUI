@@ -5,9 +5,29 @@ import sys
 rocmPytorchUrl = 'https://download.pytorch.org/whl/rocm6.0'
 topName = 'requirements_top'
 
-cmd_compile_top = [sys.executable, '-m', 'uv', 'pip', 'compile', '-q', f'{topName}.txt', '-o', f'{topName}.lock', '--override', 'overrides.txt']
-cmd_install_top = [sys.executable, '-m', 'uv', 'pip', 'install', '--extra-index-url', rocmPytorchUrl, '-r', f'{topName}.lock', '--verbose']
+cmdCompileTop = [sys.executable, '-m', 'uv', 'pip', 'compile', '-q', f'{topName}.txt', '-o', f'{topName}.lock', '--override', 'overrides.txt']
+cmdInstallTop = [sys.executable, '-m', 'uv', 'pip', 'install', '--extra-index-url', rocmPytorchUrl, '-r', f'{topName}.lock', '--no-deps']
 
+def handleOpencv(p: Path):
+    """as per the opencv docs, you should only have exactly one opencv package.
+    headless is more suitable for comfy than the gui version, so remove gui if
+    headless is present. TODO: add support for contrib pkgs. see: https://github.com/opencv/opencv-python"""
+    
+    with open(p / f'{topName}.lock', 'r') as f:
+        lines = f.readlines()
+    
+    guiFound, headlessFound = False, False
+    for line in lines:
+        if 'opencv-python==' in line:
+            guiFound = True
+        elif 'opencv-python-headless==':
+            headlessFound = True
+
+    if headlessFound and guiFound:
+        with open(p / f'{topName}.lock', 'w') as f:
+            for line in lines:
+                if 'opencv-python==' not in line:
+                    f.write(line)
 
 def run(cmd: list[str], cwd: str):
     """uses check_call to run pip, as reccomended by the pip maintainers.
@@ -21,7 +41,7 @@ def makeTop(p: Path):
 
     reqs = p.glob('custom_nodes/[!__pycache__]*/requirements.txt')
 
-    with open(f'{topName}.txt', 'w') as f:
+    with open(p / f'{topName}.txt', 'w') as f:
         f.write('# ensure usage of amd/rocm version of pytorch\n')
         f.write(f'--extra-index-url {rocmPytorchUrl}\n\n')
         f.write('# main comfy ui dependencies\n')
@@ -38,12 +58,15 @@ def compileTop(p: Path):
     
     # first, clean up
     (p / f'{topName}.lock').unlink(missing_ok=True)
-    run(cmd_compile_top, str(p))
+    run(cmdCompileTop, str(p))
+
+    # dedupe opencv
+    handleOpencv(p)
 
 def installTop(p: Path):
     """install the resolved top-level requirements using `uv pip install`"""
 
-    run(cmd_install_top, str(p))
+    run(cmdInstallTop, str(p))
 
 if __name__ == '__main__':
     here = Path('.')
