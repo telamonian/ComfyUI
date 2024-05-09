@@ -73,8 +73,8 @@
 
 - The venv path hacking magic that allows for correctly nested venvs. Run this with the top level venv activated:
 
-"""bash
+```bash
 base_site_packages="$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
 derived_site_packages="$(./path-to-sub-venv/bin/python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
 echo "$base_site_packages" > "$derived_site_packages"/_base_packages.pth
-"""
+```
