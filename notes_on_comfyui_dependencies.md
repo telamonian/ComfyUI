@@ -48,4 +48,11 @@
     - still pretty new, and thus buggy
       - for example, it claims that `tqdm==4.65.0` doesn't exist (which it does). I "fixed" this by adding tqdm to overrides.txt
 - poetry
-  - TODO
+  - pros
+    - has lockfiles
+  - cons
+    - real slow
+    - requires a lot of explicit config for packages not on pypi (eg torch+gpu packages)
+    - requires non-standard `pyproject.toml` file that isn't 100% compatible with `pip`, `uv`, etc
+    - do we actually need a lock file? Given that users can install an arbitrary set of custom nodes, insisting on lock files is counterproductive
+      - a lockfile may still make sense at top level for just core comfyui alone
