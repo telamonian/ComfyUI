@@ -29,8 +29,26 @@
       - https://stackoverflow.com/questions/61019081/is-it-possible-to-create-nested-virtual-environments-for-python
       
   - c) Gather and resolve all core and node dependencies into a single explicit requirements.txt file
-    - 
-    
+    - proposed workflow:
+      - using a tool like `uv pip compile`, resolve core deps into an explicit requirements file (ie every dep and subdep is listed along with exact version resolved)
+      - repeat one-by-one with each custom node
+      - combine all of the explicit req files, resolving any conflicts as so:
+        - first, apply any special handling rules (eg for `torch+gpu`, `opencv-python`, etc)
+        - if any of the nodes deps conflict with core deps, always prefer the core version
+        - if any node deps conflict with each other, always prefer the newest version resolved
+      - install resulting fully resolved requirement file
+    - pros:
+      - flexible enough to handle any special cases
+      - ensures that dep versions specified by core comfy are always used, as per the comfyui maintainer's preference
+      - given that a version conflict can be solved by a simple override, this should provide an easy and consistent UX
+      - guaranteed to be at least not worse than the current approach in `comfy-cli` of relying on install-order-dependent clobbering of conflicts
+    - cons:
+      - is not formally "correct"
+      - will probably (?) eventually result in a situation where it silently installs a non-functional conflicting mess
+    - overall I think this is the most promising approach, but serious thought needs to be put into UX
+      - warn noisily when a conflict is autoresolved
+      - keep track in a record file somewhere of conflict resolution actions taken
+
 - options b. and c. are not mutually exclusive
 - for the purpose of snapshotting, however, option c by itself should be the simplest
 
@@ -47,6 +65,12 @@
 - longer answser: the `uv pip compile` command appears to treat requirements listed in a `pyproject.toml` nearly the same as it does those in `requirement.txt` files. No `-r` flag is needed, instead you can just pass in the path to a dir containing a `pyproject.toml` file.
 
 
+# code
+
+- The venv path hacking magic that allows for correctly nested venvs. Run this with the top level venv activated:
+
+"""bash
 base_site_packages="$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
-derived_site_packages="$(./venv/venv-node/bin/python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
+derived_site_packages="$(./path-to-sub-venv/bin/python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
 echo "$base_site_packages" > "$derived_site_packages"/_base_packages.pth
+"""

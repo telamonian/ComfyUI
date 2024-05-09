@@ -40,6 +40,8 @@ scipy  = "*"
 tqdm = "*"
 psutil  = "*"
 kornia = ">=0.7.1"
+#comfyui-dragnuwa = {path = "custom_nodes/ComfyUI-DragNUWA", develop = false}
+#comfyui-ipadapter-plus = {path = "custom_nodes/ComfyUI_IPAdapter_plus", develop = false}
 
 [[tool.poetry.source]]
 name = "torch-amd"
