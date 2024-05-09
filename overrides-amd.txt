@@ -1,0 +1,5 @@
+# for some reason (likely a uv bug in version tag handling) you need to list the torch packages here in order for the correct gpu-specific package to get used
+--extra-index-url https://download.pytorch.org/whl/rocm6.0
+torch
+torchsde
+torchvision
