@@ -50,8 +50,10 @@
 - poetry
   - pros
     - has lockfiles
+    - easily install via `pipx`
   - cons
     - real slow
+    - can't be directly installed by `pip`
     - requires a lot of explicit config for packages not on pypi (eg torch+gpu packages)
     - requires non-standard `pyproject.toml` file that isn't 100% compatible with `pip`, `uv`, etc
     - do we actually need a lock file? Given that users can install an arbitrary set of custom nodes, insisting on lock files is counterproductive
