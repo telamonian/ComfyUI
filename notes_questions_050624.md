@@ -4,7 +4,7 @@
   - If we want to install a custom node, how can we do that safely such that we can roll back to the previous pip state if there are dependency conflicts during installation?
 
 - 3 options
-  - a) Don't. Delegate responsibility for python dependencies to python ecosystem by installing comfy and custom nodes one-by-one
+  - a) Don't. Delegate responsibility for python dependencies to python ecosystem by installing comfy and custom nodes one-by-one with `pip install`
     - pros:
       - less work
       - same approach taken by 95% of python projects
@@ -21,9 +21,10 @@
     - pros:
       - when in nested venv, pip refuses to install/uninstall anything in the top level venv
       - saves the disk space that otherwise would be required to install all comfy core deps in each and every venv representing a set of custom nodes
+      - if we do the UX right, any added complexity will be completely transparent to the user
     - cons:
       - really complicated
-      - due to ^^^^^, hard to set up well in the first place, likely prone to bugs
+      - due to ^^^^^^^^^^^, hard to set up well in the first place, likely prone to bugs
         - for example, in the case of an outright conflict between packages in top level/nested venv, pip will install a "shadow" package in the nested venv
     - refs:
       - https://stackoverflow.com/questions/61019081/is-it-possible-to-create-nested-virtual-environments-for-python
@@ -55,9 +56,12 @@
 2. What are entry points (EP) and how do they help here?
 
 - roughly speaking, there are 3 kinds of EP in python
-  - script EP, that installs a specific executable .py file to $PATH
-  - command EP, that installs a script on $PATH that calls a specific python function
+  - console script EP, that installs a script on $PATH that calls a specific python function
+  - GUI script EP, same thing as console script EP but it launches in a separate window
   - plugin EP, a simple hook that advertises a plugin function that can be easily discovered/called in a "parent" package that consumes it
+
+- refs:
+  - https://setuptools.pypa.io/en/stable/userguide/entry_point.html
  
 3. Can `uv` handle pyproject.toml dependencies
 
