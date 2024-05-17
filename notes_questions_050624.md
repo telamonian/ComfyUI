@@ -60,6 +60,43 @@
   - GUI script EP, same thing as console script EP but it launches in a separate window
   - plugin EP, a simple hook that advertises a plugin function that can be easily discovered/called in a "parent" package that consumes it
 
+- example of entry point plugin hooks in a custom node's `pyproject.toml`:
+```toml
+[project.entry-points."comfyui.node_class_mappings"]
+node_class_mappings = "comfyui_ipadapter_plus:NODE_CLASS_MAPPINGS"
+
+[project.entry-points."comfyui.node_display_name_mappings"]
+node_display_name_mappings = "comfyui_ipadapter_plus:NODE_DISPLAY_NAME_MAPPINGS"
+```
+
+- as an alternative to explicit specification of entry points, they could be automatically handled in custom nodes by a lightly customized `build-backend`, eg:
+```toml
+[build-system]
+requires = ["comfyui_packaging"]
+build-backend = "comfyui_packaging.build_api"
+```
+  - see [`jupyter-packaging`](https://github.com/jupyter/jupyter-packaging) for an existing example of something similar
+
+- NB: in order to function as plugins, projects with plugin entry points must be installed as actual python packages
+
+- example of entry point plugin consumption code in core comfyui's `node.py`:
+```python
+def load_custom_nodes_entry_points():
+    base_node_names = set(NODE_CLASS_MAPPINGS.keys())
+
+    for ep in entry_points(group="comfyui.node_class_mappings"):
+        class_mapping = ep.load()
+        for name in class_mapping:
+            if name not in base_node_names:
+                NODE_CLASS_MAPPINGS[name] = class_mapping[name]
+
+    for ep in entry_points(group="comfyui.node_display_name_mappings"):
+        display_name_mapping = ep.load()
+        NODE_DISPLAY_NAME_MAPPINGS.update(display_name_mapping)
+```
+
+- on the other hand, consuming entry point plugins does *not* require core comfyui to be installed as a python package
+
 - refs:
   - https://setuptools.pypa.io/en/stable/userguide/entry_point.html
  
