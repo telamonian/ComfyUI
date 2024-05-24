@@ -8,6 +8,17 @@ Normally, Python installs dependencies in an order-dependent, FIFO manner. This 
 
 ## Features
 
+- Produces deterministic Python installations
+  - Aims to be as "correct" (in terms of version constraints) as possible, but prioritizes UX
+  - Follows a few predictable rules
+- Can record and restore any Python environment
+  - Record is based on `uv pip compile`
+  - Restore is based on `uv pip sync`
+  - The records will be stored as part of the cm-cli lockfile
+- Also includes dedicated code for handling the various special cases amongst the standard comfy dependencies
+  - eg ensuring the correct torch+gpu package, ensuring that exactly one headless install of opencv is present, etc
+  - This section of the code can become a sort of repository of community knowledge (via PR) about any special cases that require special handling
+
 ## Implementation
 
 ## Integration with Existing Comfy-CLI Assets
