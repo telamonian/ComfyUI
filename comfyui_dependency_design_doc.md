@@ -1,4 +1,4 @@
-# Design Doc
+# Design Doc for cm-cli's Handling of Python Dependencies
 
 ## Motivation
 
@@ -63,4 +63,3 @@ python: [list of requirement specifiers]
 - Lockfile becomes an unmaneageable mess
   - One way to mitigate this would be to decide on a formal schema early in development 
   - Ideally this would include a json-schema specification. This can serve both as a reference and a PR target
-  
