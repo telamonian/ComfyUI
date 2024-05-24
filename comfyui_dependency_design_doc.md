@@ -28,13 +28,31 @@ Normally, Python installs dependencies in an order-dependent, FIFO manner. This 
   1. Get a list of all extensions in the workspace
   2. Based on extensions, gather all Python dependencies
     - Currently that will mean getting the path to/contents of the `requirements.txt` of core and all extensions
-    - In the future, if/when core and extensions are packaged as Python modules, this may become much simpler
+    - In the future, if/when core and extensions are packaged as Python modules, this part may become much simpler
   3. Feed all Python deps to uv compile
-    - 
+    - `pip uv compile -r req1 req2 ...`
+  4. Based on output, decide what overrides are needed, if any
+  5. Run uv compile again with overrides
+    - `pip uv compile --overide overides.txt -r req1 req2 ...`
+  6. Peform any other special handling needed on the compile results
+  7. Sync the results with the env
+    - `pip sync compiled.txt`
+  8. Save a record of the compile result to the lockfile
 
 ## Integration with Existing Comfy-CLI Assets
 
+- The record produced by `uv pip compile` will be stored in it's own section in the lockfile.
 
+- One possible schema:
+
+```yaml
+python: [list of requirement specifiers]
+  - [req spec defined here: https://pip.pypa.io/en/stable/reference/requirement-specifiers/]
+```
+
+- The above is basically the same as the lines you'd find in a normal `requirements.txt`, which matches the output of `uv pip compile`
+
+- There's a *lot* of work to be done in terms of integrating this and all of the other lockfile functionality with the relevant moving parts of cm-cli
 
 ## Risks
 
@@ -44,4 +62,5 @@ Normally, Python installs dependencies in an order-dependent, FIFO manner. This 
 
 - Lockfile becomes an unmaneageable mess
   - One way to mitigate this would be to decide on a formal schema early in development 
-  - Ideally this would include a json-schema specification
+  - Ideally this would include a json-schema specification. This can serve both as a reference and a PR target
+  
