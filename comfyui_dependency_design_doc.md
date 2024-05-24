@@ -21,4 +21,15 @@ Normally, Python installs dependencies in an order-dependent, FIFO manner. This 
 
 ## Implementation
 
+- Unfortunately, following in pip's footsteps, uv has no programmatic api
+  - This means that all interaction cm-cli <-> uv will have to be through subprocess commands and the output/stdout of uv
+
+- Workflow for the install of the Python env for a workspace:
+  1. Get a list of all extensions in the workspace
+  2. Based on extensions, gather all Python dependencies
+    - Currently that will mean getting the path to/contents of the `requirements.txt` of core and all extensions
+    - In the future, if/when core and extensions are packaged as Python modules, this may become much simpler
+  3. Feed all Python deps to uv compile
+    - 
+
 ## Integration with Existing Comfy-CLI Assets
