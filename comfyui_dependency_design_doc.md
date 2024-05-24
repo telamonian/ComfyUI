@@ -1,10 +1,10 @@
-# Design Doc for cm-cli's Handling of Python Dependencies
+# Design Doc for comfy-cli's Handling of Python Dependencies
 
 ## Motivation
 
 (this is a draft of the blog abstract)
 
-Normally, Python installs dependencies in an order-dependent, FIFO manner. This means that the more recently you installed a package, the more likely said package's dependencies are to be correct and up-to-date. This is good enough in many general purpose Python environments. However, in a ComfyUI environment, the dependencies of core `comfyui` and every single installed custom node extension must be ensured at run time in order for the ComfyUI app to function correctly. Ideally, we want a  cleaner, more predictable approach to Python dependencies that produces a deterministic result. To this end, cm-cli has implemented a set of comfy-specific dependency management tools on top of `uv` and other established projects. These tools allow cm-cli to install, record, and restore the Python environment needed for any possible comfy workflow.
+Normally, Python installs dependencies in an order-dependent, FIFO manner. This means that the more recently you installed a package, the more likely said package's dependencies are to be correct and up-to-date. This is good enough in many general purpose Python environments. However, in a ComfyUI environment, the dependencies of core `comfyui` and every single installed custom node extension must be ensured at run time in order for the ComfyUI app to function correctly. Ideally, we want a  cleaner, more predictable approach to Python dependencies that produces a deterministic result. To this end, comfy-cli has implemented a set of comfy-specific dependency management tools on top of `uv` and other established projects. These tools allow comfy-cli to install, record, and restore the Python environment needed for any possible comfy workflow.
 
 ## Features
 
@@ -14,7 +14,7 @@ Normally, Python installs dependencies in an order-dependent, FIFO manner. This 
 - Can record and restore any Python environment
   - Record is based on `uv pip compile`
   - Restore is based on `uv pip sync`
-  - The records will be stored as part of the cm-cli lockfile
+  - The records will be stored as part of the comfy-cli lockfile
 - Also includes dedicated code for handling the various special cases amongst the standard comfy dependencies
   - eg ensuring the correct torch+gpu package, ensuring that exactly one headless install of opencv is present, etc
   - This section of the code can become a sort of repository of community knowledge (via PR) about any special cases that require special handling
@@ -22,7 +22,7 @@ Normally, Python installs dependencies in an order-dependent, FIFO manner. This 
 ## Implementation
 
 - Unfortunately, following in pip's footsteps, uv has no programmatic api
-  - This means that all interaction cm-cli <-> uv will have to be through subprocess commands and the output/stdout of uv
+  - This means that all interaction comfy-cli <-> uv will have to be through subprocess commands and the output/stdout of uv
 
 - Workflow for the install of the Python env for a workspace:
   1. Get a list of all extensions in the workspace
@@ -52,7 +52,7 @@ python: [list of requirement specifiers]
 
 - The above is basically the same as the lines you'd find in a normal `requirements.txt`, which matches the output of `uv pip compile`
 
-- There's a *lot* of work to be done in terms of integrating this and all of the other lockfile functionality with the relevant moving parts of cm-cli
+- There's a *lot* of work to be done in terms of integrating this and all of the other lockfile functionality with the relevant moving parts of comfy-cli
 
 ## Risks
 
