@@ -27,16 +27,16 @@ Normally, Python installs dependencies in an order-dependent, FIFO manner. This 
 - Workflow for the install of the Python env for a workspace:
   1. Get a list of all extensions in the workspace
   2. Based on extensions, gather all Python dependencies
-    - Currently that will mean getting the path to/contents of the `requirements.txt` of core and all extensions
-    - In the future, if/when core and extensions are packaged as Python modules, this part may become much simpler
+     - Currently that will mean getting the path to/contents of the `requirements.txt` of core and all extensions
+     - In the future, if/when core and extensions are packaged as Python modules, this part may become much simpler
   3. Feed all Python deps to uv compile
-    - `pip uv compile -r req1 req2 ...`
+     - `pip uv compile -r req1 req2 ...`
   4. Based on output, decide what overrides are needed, if any
   5. Run uv compile again with overrides
-    - `pip uv compile --overide overides.txt -r req1 req2 ...`
+     - `pip uv compile --overide overides.txt -r req1 req2 ...`
   6. Peform any other special handling needed on the compile results
   7. Sync the results with the env
-    - `pip sync compiled.txt`
+     - `pip sync compiled.txt`
   8. Save a record of the compile result to the lockfile
 
 ## Integration with Existing Comfy-CLI Assets
