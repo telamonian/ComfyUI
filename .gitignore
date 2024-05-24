@@ -18,3 +18,5 @@ venv/
 /user/
 requirements_top*
 *.code-workspace
+*.history
+
