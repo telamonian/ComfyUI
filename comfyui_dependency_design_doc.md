@@ -33,3 +33,15 @@ Normally, Python installs dependencies in an order-dependent, FIFO manner. This 
     - 
 
 ## Integration with Existing Comfy-CLI Assets
+
+
+
+## Risks
+
+- Astral drops ongoing support for uv
+  - Seems unlikely given that rye is being depracted in favor of uv
+  - uv is basically just a very fast bundle of core pip and pip-tools, and aims to be a drop-in replacement. In case uv ever dissappears, our tools can be trivially refactored to use core pip and pip-tools instead.
+
+- Lockfile becomes an unmaneageable mess
+  - One way to mitigate this would be to decide on a formal schema early in development 
+  - Ideally this would include a json-schema specification
