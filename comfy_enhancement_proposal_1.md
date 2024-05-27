@@ -23,7 +23,7 @@ The proposed enhancement is twofold:
 
 ## What we are not Proposing
 
-It does not necessarily follow from packaging custom node extensions as Python modules that said modules will be uploaded to PyPI (ie the primary open source Python repository) or be made available for download via the default `pip` commands. Given the unique needs of the ComfyUI ecosystem (in particular, the need to deal with many gigabytes worth of model files) there is some natural motivation for a comfy-flavored solution for distribution and related tooling. The proposal authors are working on one such tool, Comfy Registry, a custom repo for ComfyUI extensions and assets.
+It does not necessarily follow from packaging custom node extensions as Python modules that said modules will be uploaded to PyPI (ie the primary open source Python repository) or be made available for download via the default `pip` commands. Given the unique needs of the ComfyUI ecosystem (in particular, the need to deal with many gigabytes worth of model files) there is some natural motivation for a comfy-flavored solution for distribution and related tooling. The proposal authors are working on one such tool, [Comfy Registry](https://www.comfyregistry.org/), a custom repo for ComfyUI extensions and assets.
 
 One of the goals of this proposal is to minimize the quantity of wheels that such Comfy native tooling will have to reinvent. The idea is that we will let the existing Python ecosystem handle the installation of the Comfy Python packages, while any Comfy specific tooling can be built on top. This will promote a healthy separation of concerns that will allow Comfy specific tooling to better focus on Comfy specific issues.
 
@@ -138,7 +138,7 @@ license = {file = "LICENSE"}
 Repository = "https://github.com/foo/myext.git"
 ```
 
-In addition, `pyproject.toml` can hold arbitrary metadata under the `[tool]` table (see [here](https://peps.python.org/pep-0518/#tool-table) for details). This provides us an opportunity to start encouraging (or perhaps requiring) ComfyUI extension devs to start recording more comfy specific metadata in a more formalized way. In particular, this is an opportunity to start including formal metadata describing exactly the set of models required for the functionality of a custom node. Comfy Registry (with which the proposal authors are involved) has put forward a possible format for a `[tool.comfy]` table of metadata in `pyproject.toml`:
+In addition, `pyproject.toml` can hold arbitrary metadata under the `[tool]` table (see [here](https://peps.python.org/pep-0518/#tool-table) for details). This provides us an opportunity to start encouraging (or perhaps requiring) ComfyUI extension devs to start recording more comfy specific metadata in a more formalized way. In particular, this is an opportunity to start including formal metadata describing exactly the set of models required for the functionality of a custom node. [Comfy Registry](https://www.comfyregistry.org/) (with which the proposal authors are involved) has put forward a possible format for a `[tool.comfy]` table of metadata in `pyproject.toml`:
 
 ```toml
 [tool.comfy]
