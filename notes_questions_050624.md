@@ -11,12 +11,12 @@
     - cons:
       - resulting install is not predictable, is dependent on the exact order in which nodes are installed
         - when you `pip install a b`, modern pip (>20.3) fully resolves the mutual dependencies of `a` and `b` and errors out on any conflicts
-        - however when you do `pip install a && pip install b`, pip won't consider the dependency contraints of `a` when resolving the deps of `b`. Instead, it simply replaces any conflicting packages with the version preferred by `b`
+        - however when you do `pip install a && pip install b`, pip won't consider the dependency constraints of `a` when resolving the deps of `b`. Instead, it simply replaces any conflicting packages with the version preferred by `b`
       - no great way to snapshot and/or rollback
         - can still do some basic stuff with `pip freeze`
 
   - b) Enforce "core" dependencies/versions via nested environments
-    - in top level venv-core, install core comfyui requriements
+    - in top level venv-core, install core comfyui requirements
     - in each nested venv-node-x, install all requirements for some set of custom nodes
     - pros:
       - when in nested venv, pip refuses to install/uninstall anything in the top level venv

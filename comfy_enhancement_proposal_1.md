@@ -28,6 +28,57 @@ One of the goals of this proposal is to minimize the quantity of wheels that suc
 
 ### Extension File Layout
 
+Currently, ComfyUI extensions are laid out with an `__init__.py` file at top level:
+
+```
+extension_root_directory
+├── __init__.py
+├── ...
+├── module.py
+└── subpkg/
+    ├── __init__.py
+    ├── ...
+    └── module1.py
+```
+
+Instead, we propose a layout more in line with the standard Python package layout in which a project metadata file (ie `pyproject.toml`) is at top level and the actual Python code is stored one or more levels below. There are 2 commonly used layouts. The [flat-layout](https://setuptools.pypa.io/en/latest/userguide/package_discovery.html#flat-layout), in which the extension's module directory is at top level next to the pyproject file:
+
+```
+extension_root_directory
+├── pyproject.toml
+├── ...
+└── myext/
+    ├── __init__.py
+    ├── ...
+    ├── module.py
+    └── subpkg/
+        ├── __init__.py
+        ├── ...
+        └── module1.py
+```
+
+There is also the [src-layout](https://setuptools.pypa.io/en/latest/userguide/package_discovery.html#src-layout), in which the extension's module directory is one extra level down underneath a `src` directory. Although slightly more convoluted, this layout has the advantage of allowing the structure of the source directory and any test directories to be symmetrical:
+
+```
+extension_root_directory
+├── pyproject.toml
+├── ...
+├── src/
+|   └── myext/
+|       ├── __init__.py
+|       ├── ...
+|       ├── module.py
+|       └── subpkg/
+|           ├── __init__.py
+|           ├── ...
+|           └── module1.py
+└── test/
+    └── myext/
+        └── ...
+```
+
+Any new ComfyUI extension should use one of the above two layouts.
+
 ### Entry Points - Extension Side Advertisement Mechanism
 
 ### Entry Points - Core Side Consumption Mechanism
@@ -43,8 +94,8 @@ This new extension pattern is compatible with, and can coexist beside, the old w
 The authors have previous experience working on the extension system of JupyterLab, another large OSS project. Taking lessons learned, it is crucial that we ensure as smooth a migration process as possible for 3rd party extension authors, in order to maintain their cooperation and enthusiasm for the ComfyUI project as a whole. To that end, there are 3 things (at least) that we need to do:
 
 1. Provide extensive documentation on the changes and a simple tutorial showing how the migration is performed.
-2. Make examples of the most prominent and popular extensions.
-  - At the start of the migration process the core Comfy team should get the buy-in and approval of the maintainers of 5 or 6 of the most visible/popular 3rd party projects. The core team should contribute/help contribute PRs to ensure that these projects can be used by the rest of the community as examples of the "right way" to perform the migration.
+2. Make examples of some popular extensions.
+  - At the start of the migration process the core Comfy team should get the buy-in and approval of the maintainers of 5 or 6 of the most visible/popular 3rd party projects. The core team should help contribute PRs to ensure that these projects can be used by the rest of the community as examples of the "right way" to perform the migration.
 3. Communicate about the migration as much as possible, and as frequently as reasonable.
   - At the onset of the migration the core team should perform as much outreach as they can in order to ensure that all of the relevant parties are at least aware of what is happening. Blog posts are helpful, and short presentations should be made at any relevant conferences.
 
