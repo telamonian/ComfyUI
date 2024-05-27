@@ -79,11 +79,46 @@ extension_root_directory
 
 Any new ComfyUI extension should use one of the above two layouts.
 
-### Entry Points - Extension Side Advertisement Mechanism
+### Entry Points
 
-### Entry Points - Core Side Consumption Mechanism
+Broadly speaking, an entry point in Python is a builtin mechanism to allow an installed Python package to expose specific functionality to other programs. For example, a 3rd party extension can advertise a plugin function that can then be consumed by some core program. See the [setuptool docs](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#advertising-behavior) for more details.
+
+#### Extension Side Advertisement Mechanism
+
+The current pattern for the code of a ComfyUI extension is that it should include a top-level `__init__.py` that includes a `NODE_CLASS_MAPPINGS` dict of {node_name: node_class} pairs. There can also be an optional `NODE_DISPLAY_NAME_MAPPINGS` dict of {node_name: display_name} pairs.
+
+Implementing the proposed entry points pattern will not require any changes to `NODE_CLASS_MAPPINGS` or any of an extension's existing Python code. Instead, an entry point section will be added to the extension's metadata in the `pyproject.toml` file:
+
+```toml
+[project.entry-points."comfyui.node_class_mappings"]
+node_class_mappings = "myext:NODE_CLASS_MAPPINGS"
+
+[project.entry-points."comfyui.node_display_name_mappings"]
+node_display_name_mappings = "myext:NODE_DISPLAY_NAME_MAPPINGS"
+```
+
+#### Core Side Consumption Mechanism
+
+The code for consuming entry points is very simple. Below is an example of a full functional implementation of entry point loading taken from an in-progress PR for ComfyUI core:
+
+```python
+def load_custom_nodes_entry_points():
+    base_node_names = set(NODE_CLASS_MAPPINGS.keys())
+
+    for ep in entry_points(group="comfyui.node_class_mappings"):
+        class_mapping = ep.load()
+        for name in class_mapping:
+            if name not in base_node_names:
+                NODE_CLASS_MAPPINGS[name] = class_mapping[name]
+
+    for ep in entry_points(group="comfyui.node_display_name_mappings"):
+        display_name_mapping = ep.load()
+        NODE_DISPLAY_NAME_MAPPINGS.update(display_name_mapping)
+```
 
 ### The `pyproject.toml` file
+
+
 
 ## Pros and Cons
 
@@ -95,9 +130,8 @@ The authors have previous experience working on the extension system of JupyterL
 
 1. Provide extensive documentation on the changes and a simple tutorial showing how the migration is performed.
 2. Make examples of some popular extensions.
-  - At the start of the migration process the core Comfy team should get the buy-in and approval of the maintainers of 5 or 6 of the most visible/popular 3rd party projects. The core team should help contribute PRs to ensure that these projects can be used by the rest of the community as examples of the "right way" to perform the migration.
+    - At the start of the migration process the core Comfy team should get the buy-in and approval of the maintainers of 5 or 6 of the most visible/popular 3rd party projects. The core team should help contribute PRs to ensure that these projects can be used by the rest of the community as examples of the "right way" to perform the migration.
 3. Communicate about the migration as much as possible, and as frequently as reasonable.
-  - At the onset of the migration the core team should perform as much outreach as they can in order to ensure that all of the relevant parties are at least aware of what is happening. Blog posts are helpful, and short presentations should be made at any relevant conferences.
+    - At the onset of the migration the core team should perform as much outreach as they can in order to ensure that all of the relevant parties are at least aware of what is happening. Blog posts are helpful, and short presentations should be made at any relevant conferences.
 
 ## Interested Contributors
-
