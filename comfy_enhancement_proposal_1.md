@@ -3,12 +3,15 @@
 
 ## Authors
 Max Klein, PhD telamonian@hotmail.com
+Robin Huang
 
 ## Problem
 
 The current state of the ComfyUI ecosystem, in particular with respect to the UX of installation and workspace management, is currently a bit of a mess. ComfyUI core and the various custom nodes are Python modules, but are not packaged as such. This causes friction, as users are unable to take advantage of the standard Python packaging tools. Instead, a user must handle the task of installing comfy core and extensions manually. To install an extension, a user must place the extension's files in the appropriate directory themselves, and then must separately install the Python dependencies of the extension. Worse, because there is no real standard for how the files of an extension should be laid out, the user is lucky if the extension author has decided to include a `requirements.txt` or other formal dependency specification. There are existing cases of (very popular) custom nodes that have instead chosen to describe their dependencies in plaintext buried in the midst of their READMEs.
 
 There is an appetite now amongst the ComfyUI community to improve this mess by coming together and agreeing on a common standard for ComfyUI extension packaging.
+
+TODO: finish this paragraph
 
 ## Proposed Enhancement
 
@@ -20,7 +23,7 @@ The proposed enhancement is twofold:
 
 ## What we are not Proposing
 
-It does not necessarily follow from packaging custom node extensions as Python modules that said modules will be uploaded to PyPI (ie the primary open source Python repository) or be made available for download via the default `pip` commands. Given the unique needs of the ComfyUI ecosystem (in particular, the need to deal with many gigabytes worth of model files) there is some natural motivation for a comfy-flavored solution for distribution and related tooling. There are already some teams/projects pursuing the idea of a custom Comfy repo, such as Comfy Registry.
+It does not necessarily follow from packaging custom node extensions as Python modules that said modules will be uploaded to PyPI (ie the primary open source Python repository) or be made available for download via the default `pip` commands. Given the unique needs of the ComfyUI ecosystem (in particular, the need to deal with many gigabytes worth of model files) there is some natural motivation for a comfy-flavored solution for distribution and related tooling. The proposal authors are working on one such tool, Comfy Registry, a custom repo for ComfyUI extensions and assets.
 
 One of the goals of this proposal is to minimize the quantity of wheels that such Comfy native tooling will have to reinvent. The idea is that we will let the existing Python ecosystem handle the installation of the Comfy Python packages, while any Comfy specific tooling can be built on top. This will promote a healthy separation of concerns that will allow Comfy specific tooling to better focus on Comfy specific issues.
 
@@ -87,7 +90,7 @@ Broadly speaking, an entry point in Python is a builtin mechanism to allow an in
 
 The current pattern for the code of a ComfyUI extension is that it should include a top-level `__init__.py` that includes a `NODE_CLASS_MAPPINGS` dict of {node_name: node_class} pairs. There can also be an optional `NODE_DISPLAY_NAME_MAPPINGS` dict of {node_name: display_name} pairs.
 
-Implementing the proposed entry points pattern will not require any changes to `NODE_CLASS_MAPPINGS` or any of an extension's existing Python code. Instead, an entry point section will be added to the extension's metadata in the `pyproject.toml` file:
+Implementing the proposed entry points pattern will not require any changes to `NODE_CLASS_MAPPINGS` or any of an extension's existing Python code. Instead, one or more entry point sections will be added to the extension's `pyproject.toml` file:
 
 ```toml
 [project.entry-points."comfyui.node_class_mappings"]
@@ -116,11 +119,44 @@ def load_custom_nodes_entry_points():
         NODE_DISPLAY_NAME_MAPPINGS.update(display_name_mapping)
 ```
 
+The above code was designed and tested to have complete parity with the existing extension loader code in ComfyUI core. One issue with the current behavior is that extension nodes whose names conflict with core nodes are silently dropped, while on the other hand extension nodes are free to clobber each other. It may make sense to revisit this node name conflict behavior as part of implementing this proposal.
+
 ### The `pyproject.toml` file
 
+Similar to any generic Python project, a ComfyUI extension's `pyproject.toml` file will include a `[project]` section:
 
+```toml
+[project]
+name = "myext" # Unique identifier for your node. Cannot be changed later.
+description = "my very good ComfyUI extension"
+version = "1.0.0" # SemVer compatible
+requires-python = ">= 3.9"
+dependencies  = []
+license = {file = "LICENSE"}
+
+[project.urls]
+Repository = "https://github.com/foo/myext.git"
+```
+
+In addition, `pyproject.toml` can hold arbitrary metadata under the `[tool]` table (see [here](https://peps.python.org/pep-0518/#tool-table) for details). This provides us an opportunity to start encouraging (or perhaps requiring) ComfyUI extension devs to start recording more comfy specific metadata in a more formalized way. In particular, this is an opportunity to start including formal metadata describing exactly the set of models required for the functionality of a custom node. Comfy Registry (with which the proposal authors are involved) has put forward a possible format for a `[tool.comfy]` table of metadata in `pyproject.toml`:
+
+```toml
+[tool.comfy]
+publisherid = "" # Must match the id registered on Comfy Registry Website
+displayname = "" # Display Name of the custom node
+icon = "images/icon.png"
+comfy-version = ">= 1.2" # Add when comfy is versioned
+os = ["all"] # windows, mac, linux
+models = [
+  {name = "foo", path = "checkpoints", url = "https://aloofback.co/foo", priority = "required"},
+  {name = "bar", path = "checkpoints", url = "https://aloofback.co/bar", priority = "default"},
+  {name = "baz", path = "checkpoints", url = "https://aloofback.co/baz", priority = "supplementary"},
+]
+```
 
 ## Pros and Cons
+
+TODO: add at least one more pro/con entry
 
 ### Migration Pathway
 
