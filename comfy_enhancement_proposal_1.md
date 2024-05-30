@@ -1,25 +1,29 @@
 # CEP 1
-# Comfy Enhancement Proposal 1 - A Modest Proposal to Pythonize ComfyUI Packaging
+# Comfy enhancement proposal 1 - Simplifying and improving ComfyUI installations
 
 ## Authors
-Max Klein, PhD telamonian@hotmail.com
-Robin Huang
+- Max Klein, PhD - telamonian@hotmail.com
+- Robin Huang
 
 ## Problem
 
-The current state of the ComfyUI ecosystem, in particular with respect to the UX of installation and workspace management, is currently a bit of a mess. ComfyUI core and the various custom nodes are Python modules, but are not packaged as such. This causes friction, as users are unable to take advantage of the standard Python packaging tools. Instead, a user must handle the task of installing comfy core and extensions manually. To install an extension, a user must place the extension's files in the appropriate directory themselves, and then must separately install the Python dependencies of the extension. Worse, because there is no real standard for how the files of an extension should be laid out, the user is lucky if the extension author has decided to include a `requirements.txt` or other formal dependency specification. There are existing cases of (very popular) custom nodes that have instead chosen to describe their dependencies in plaintext buried in the midst of their READMEs.
+Currently installing ComfyUI core and a set of custom node extensions is a difficult, inconsistent process. There are many efforts under way right now in the Comfy ecosystem to create tools to ease this installation process. However, these tools are currently the position of having to reinvent the wheels of software packaging and management. They have to provide their own custom implementations of various difficult features, such as caching and cache management.
 
-There is an appetite now amongst the ComfyUI community to improve this mess by coming together and agreeing on a common standard for ComfyUI extension packaging.
+Instead, we should take advantage of the fact that ComfyUI core and all of the extensions are Python packages. If we could build on top of the extensive zoo of existing, well-featured Python installer tools, it will greatly simplify the creation of new Comfy installer tools. We can encourage a strong separation of concerns by allowing Python tools to handle installation of Python packages, freeing the developers of Comfy-specific installer tools to focus on Comfy-specific problems.
 
-TODO: finish this paragraph
+However, custom node extensions currently are not structured as proper Python packages, nor do they generally include the appropriate metadata in an appropriate format. This causes friction and errors when trying to use Python tools with the existing Comfy assets. By coming together as a community and deciding upon a standard for how to package custom node extensions, we can lay the groundwork for a fertile ecosystem of Comfy installer tools.
+
+This proposal lays out a framework by which *new* Comfy extensions should be laid out, and what metadata they should contain. By following the standards laid out here, we will ensure that every new extension is also a proper Python package. Hand-in-hand with that, we also propose a new mechanism by which core ComfyUI will load extensions. This mechanism will be based on Python's builtin `entry_point`. The current pattern requires extensions to be manually placed within a subdirectory of ComfyUI core. Instead, `entry_point` based extensions can be installed as standard Python packages while still allowing ComfyUI core to load their assets. This new mechanism will initially coexist alongside the old extension loading mechanism, ensuring that both old-style and new-style will continue to work. Over time, a pathway by which to migrate old-style extensions to the new-style pattern will be created, and eventually the old-style will be deprecated alongside a major version of ComfyUI core.
 
 ## Proposed Enhancement
 
-The proposed enhancement is twofold:
+The proposed enhancement is threefold:
+ 
+  1. At the top level of every new custom node extension there should be a `pyproject.toml` file. This should include all of the metadata that is normally required for a Python project, in particular a formal listing of dependencies, ideally with at least some version constraints.
 
-  1. New custom node extensions should be laid out as Python packages, following the current best practices of the Python community. At the top level there should be a `pyproject.toml` file that includes all of the metadata that is normally required for a Python project, in particular a formal listing of dependencies, ideally with at least some version constraints. The actual contents of the Python module (ie `__init__.py` and any other Python assets) should be collected in a single subdirectory.
+  2. New custom node extensions should be laid out as Python packages, following the current best practices of the Python community. Beside the top level `pyproject.toml`, the actual contents of the Python module (ie `__init__.py` and any other Python assets) should be collected in a single subdirectory.
 
-  2. New custom node extensions should advertise their functionality, and core ComfyUI should consume said functionality, via Python's builtin `entry_points` mechanism. This will allow extensions to be installed using the same automated tooling as any other Python package (ie `pip install <node_path_or_url>`). This will also have the happy consequence (in conjunction with the `pyproject.toml` described above) of automatically handling any needed Python dependencies.
+  3. New custom node extensions should advertise their functionality, and core ComfyUI should consume said functionality, via Python's builtin `entry_point` mechanism. This will allow extensions to be installed using the same automated tooling as any other Python package (ie `pip install <node_path_or_url>`). This will also have the happy consequence (in conjunction with the `pyproject.toml` described above) of automatically handling any needed Python dependencies.
 
 ## What we are not Proposing
 
@@ -28,6 +32,39 @@ It does not necessarily follow from packaging custom node extensions as Python m
 One of the goals of this proposal is to minimize the quantity of wheels that such Comfy native tooling will have to reinvent. The idea is that we will let the existing Python ecosystem handle the installation of the Comfy Python packages, while any Comfy specific tooling can be built on top. This will promote a healthy separation of concerns that will allow Comfy specific tooling to better focus on Comfy specific issues.
 
 ## Detailed Explanation
+
+### The `pyproject.toml` file
+
+Similar to any generic Python project, a ComfyUI extension's `pyproject.toml` file will include a `[project]` section:
+
+```toml
+[project]
+name = "myext" # Unique identifier for your node. Cannot be changed later.
+description = "my very good ComfyUI extension"
+version = "1.0.0" # SemVer compatible
+requires-python = ">= 3.9"
+dependencies  = []
+license = {file = "LICENSE"}
+
+[project.urls]
+Repository = "https://github.com/foo/myext.git"
+```
+
+In addition, `pyproject.toml` can hold arbitrary metadata under the `[tool]` table (see [here](https://peps.python.org/pep-0518/#tool-table) for details). This provides us an opportunity to start encouraging (or perhaps requiring) ComfyUI extension devs to start recording more comfy specific metadata in a more formalized way. In particular, this is an opportunity to start including formal metadata describing exactly the set of models required for the functionality of a custom node. [Comfy Registry](https://www.comfyregistry.org/) (with which the proposal authors are involved) has put forward a possible format for a `[tool.comfy]` table of metadata in `pyproject.toml`:
+
+```toml
+[tool.comfy]
+publisherid = "" # Must match the id registered on Comfy Registry Website
+displayname = "" # Display Name of the custom node
+icon = "images/icon.png"
+comfy-version = ">= 1.2" # Add when comfy is versioned
+os = ["all"] # windows, mac, linux
+models = [
+  {name = "foo", path = "checkpoints", url = "https://aloofback.co/foo", priority = "required"},
+  {name = "bar", path = "checkpoints", url = "https://aloofback.co/bar", priority = "default"},
+  {name = "baz", path = "checkpoints", url = "https://aloofback.co/baz", priority = "supplementary"},
+]
+```
 
 ### Extension File Layout
 
@@ -121,42 +158,7 @@ def load_custom_nodes_entry_points():
 
 The above code was designed and tested to have complete parity with the existing extension loader code in ComfyUI core. One issue with the current behavior is that extension nodes whose names conflict with core nodes are silently dropped, while on the other hand extension nodes are free to clobber each other. It may make sense to revisit this node name conflict behavior as part of implementing this proposal.
 
-### The `pyproject.toml` file
-
-Similar to any generic Python project, a ComfyUI extension's `pyproject.toml` file will include a `[project]` section:
-
-```toml
-[project]
-name = "myext" # Unique identifier for your node. Cannot be changed later.
-description = "my very good ComfyUI extension"
-version = "1.0.0" # SemVer compatible
-requires-python = ">= 3.9"
-dependencies  = []
-license = {file = "LICENSE"}
-
-[project.urls]
-Repository = "https://github.com/foo/myext.git"
-```
-
-In addition, `pyproject.toml` can hold arbitrary metadata under the `[tool]` table (see [here](https://peps.python.org/pep-0518/#tool-table) for details). This provides us an opportunity to start encouraging (or perhaps requiring) ComfyUI extension devs to start recording more comfy specific metadata in a more formalized way. In particular, this is an opportunity to start including formal metadata describing exactly the set of models required for the functionality of a custom node. [Comfy Registry](https://www.comfyregistry.org/) (with which the proposal authors are involved) has put forward a possible format for a `[tool.comfy]` table of metadata in `pyproject.toml`:
-
-```toml
-[tool.comfy]
-publisherid = "" # Must match the id registered on Comfy Registry Website
-displayname = "" # Display Name of the custom node
-icon = "images/icon.png"
-comfy-version = ">= 1.2" # Add when comfy is versioned
-os = ["all"] # windows, mac, linux
-models = [
-  {name = "foo", path = "checkpoints", url = "https://aloofback.co/foo", priority = "required"},
-  {name = "bar", path = "checkpoints", url = "https://aloofback.co/bar", priority = "default"},
-  {name = "baz", path = "checkpoints", url = "https://aloofback.co/baz", priority = "supplementary"},
-]
-```
-
 ## Pros and Cons
-
-TODO: add at least one more pro/con entry
 
 ### Migration Pathway
 
@@ -171,3 +173,6 @@ The authors have previous experience working on the extension system of JupyterL
     - At the onset of the migration the core team should perform as much outreach as they can in order to ensure that all of the relevant parties are at least aware of what is happening. Blog posts are helpful, and short presentations should be made at any relevant conferences.
 
 ## Interested Contributors
+
+- One of the authors (Max Klein, @telamonian on github) has already contributed a PR with a basic prototype of the `entry_point` mechanism to ComfyUI core, and is interested in further developing any related code.
+- Robin Huang and the rest of the Comfy Registry team would like to support the creation of a formal `pyproject.toml` standard.
