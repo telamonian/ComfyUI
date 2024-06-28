@@ -115,6 +115,7 @@ class Appler:
     def sync(
         cwd: PathLike,
         reqFile: list[PathLike],
+        extraUrl: str | None = None,
         dry: bool = False
     ) -> subprocess.CompletedProcess[Any]:
         cmd = [
@@ -125,6 +126,12 @@ class Appler:
             "sync",
             str(reqFile),
         ]
+
+        if extraUrl is not None:
+            cmd.extend([
+                "--extra-index-url",
+                extraUrl,
+            ])
 
         if dry:
             cmd.append("--dry-run")
@@ -181,17 +188,17 @@ class Appler:
         )
 
     def syncCorePlusExt(self):
-        Appler.install(
-            cwd=self.cwd,
-            reqFile=self.out,
-            override=self.override,
-            dry=True,
-        )
+        # Appler.install(
+        #     cwd=self.cwd,
+        #     reqFile=self.out,
+        #     override=self.override,
+        #     dry=True,
+        # )
 
         Appler.sync(
             cwd=self.cwd,
             reqFile=self.out,
-            dry=True,
+            extraUrl=self.gpuUrl,
         )
 
     def handleOpencv(self):
