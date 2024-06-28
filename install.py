@@ -48,8 +48,6 @@ class Appler:
             reqFiles.extend(p.glob(reqName))
         return reqFiles
 
-    # cmdCompileTop = [sys.executable, "-m", "uv", "pip", "compile", "-q", f"{topName}.txt", "-o", f"{topName}.lock", "--override", "overrides.txt"]
-    # cmdInstallTop = [sys.executable, "-m", "uv", "pip", "install", "--extra-index-url", rocmPytorchUrl, "-r", f"{topName}.lock", "--no-deps"]
 
     @staticmethod
     def compile(
@@ -257,18 +255,6 @@ def installComfyDeps(cwd: PathLike, gpu: str):
     appler.handleOpencv()
 
     appler.syncCorePlusExt()
-
-# def installTop(p: Path):
-#     """install the resolved top-level requirements using `uv pip install`"""
-
-#     run(cmdInstallTop, str(p))
-
-# if __name__ == "__main__":
-#     here = Path(".")
-
-#     makeTop(here)
-#     compileTop(here)
-#     installTop(here)
 
 if __name__ == "__main__":
     installComfyDeps(cwd=".", gpu="amd")
