@@ -7,7 +7,7 @@ from typing import Any
 
 PathLike = os.PathLike[str] | str
 
-def run(cmd: list[str], cwd: str = ".") -> subprocess.CompletedProcess[Any]:
+def run(cmd: list[str], cwd: PathLike) -> subprocess.CompletedProcess[Any]:
     return subprocess.run(
         cmd,
         cwd=cwd,
@@ -15,7 +15,7 @@ def run(cmd: list[str], cwd: str = ".") -> subprocess.CompletedProcess[Any]:
         text=True,
     )
 
-def check_call(cmd: list[str], cwd: str = "."):
+def check_call(cmd: list[str], cwd: PathLike):
     """uses check_call to run pip, as reccomended by the pip maintainers.
     see https://pip.pypa.io/en/stable/user_guide/#using-pip-from-your-program"""
 
@@ -47,12 +47,17 @@ class Appler:
         for reqName in Appler.reqNames:
             reqFiles.extend(p.glob(reqName))
         return reqFiles
-    
+
     # cmdCompileTop = [sys.executable, "-m", "uv", "pip", "compile", "-q", f"{topName}.txt", "-o", f"{topName}.lock", "--override", "overrides.txt"]
     # cmdInstallTop = [sys.executable, "-m", "uv", "pip", "install", "--extra-index-url", rocmPytorchUrl, "-r", f"{topName}.lock", "--no-deps"]
 
     @staticmethod
-    def compile(reqFiles: list[PathLike], override: PathLike | None = None, out: PathLike | None = None) -> subprocess.CompletedProcess[Any]:
+    def compile(
+        cwd: PathLike,
+        reqFiles: list[PathLike],
+        override: PathLike | None = None,
+        out: PathLike | None = None
+    ) -> subprocess.CompletedProcess[Any]:
         cmd = [
             sys.executable,
             "-m",
@@ -60,7 +65,7 @@ class Appler:
             "pip",
             "compile",
         ]
-        
+
         for reqFile in reqFiles:
             cmd.append(str(reqFile))
 
@@ -69,14 +74,62 @@ class Appler:
                 "--override",
                 str(override),
             ])
-        
+
         if out is not None:
             cmd.extend([
                 "-o",
                 str(out),
             ])
 
-        return run(cmd)
+        return run(cmd, cwd)
+
+    @staticmethod
+    def install(
+        cwd: PathLike,
+        reqFile: list[PathLike],
+        override: PathLike | None = None,
+        dry: bool = False
+    ) -> subprocess.CompletedProcess[Any]:
+        cmd = [
+            sys.executable,
+            "-m",
+            "uv",
+            "pip",
+            "install",
+            "-r",
+            str(reqFile),
+        ]
+
+        if override is not None:
+            cmd.extend([
+                "--override",
+                str(override),
+            ])
+
+        if dry:
+            cmd.append("--dry-run")
+
+        return check_call(cmd, cwd)
+
+    @staticmethod
+    def sync(
+        cwd: PathLike,
+        reqFile: list[PathLike],
+        dry: bool = False
+    ) -> subprocess.CompletedProcess[Any]:
+        cmd = [
+            sys.executable,
+            "-m",
+            "uv",
+            "pip",
+            "sync",
+            str(reqFile),
+        ]
+
+        if dry:
+            cmd.append("--dry-run")
+
+        return check_call(cmd, cwd)
 
     def __init__(
         self,
@@ -106,7 +159,11 @@ class Appler:
                 f.write("\n\n")
             f.write("# ensure that core comfyui deps take precedence over any 3rd party extension deps\n")
 
-        coreOverride = Appler.compile(self.coreReqFiles, override=self.override)
+        coreOverride = Appler.compile(
+            cwd=self.cwd,
+            reqFiles=self.coreReqFiles,
+            override=self.override
+        )
 
         with open(self.override, "a") as f:
             for line in coreOverride.stdout:
@@ -117,19 +174,34 @@ class Appler:
         self.out.unlink(missing_ok=True)
 
         Appler.compile(
+            cwd=self.cwd,
             reqFiles=(self.coreReqFiles + self.extReqFiles),
             override=self.override,
             out=self.out,
+        )
+
+    def syncCorePlusExt(self):
+        Appler.install(
+            cwd=self.cwd,
+            reqFile=self.out,
+            override=self.override,
+            dry=True,
+        )
+
+        Appler.sync(
+            cwd=self.cwd,
+            reqFile=self.out,
+            dry=True,
         )
 
     def handleOpencv(self):
         """as per the opencv docs, you should only have exactly one opencv package.
         headless is more suitable for comfy than the gui version, so remove gui if
         headless is present. TODO: add support for contrib pkgs. see: https://github.com/opencv/opencv-python"""
-        
+
         with open(self.out, "r") as f:
             lines = f.readlines()
-        
+
         guiFound, headlessFound = False, False
         for line in lines:
             if "opencv-python==" in line:
@@ -146,12 +218,14 @@ class Appler:
 def installComfyDeps(cwd: PathLike, gpu: str):
     p = Path(cwd)
     extDirs = [d for d in p.glob("custom_nodes/[!__pycache__]*") if d.is_dir()]
-    
+
     appler = Appler(cwd=cwd, extDirs=extDirs, gpu=gpu)
 
     appler.makeOverride()
     appler.compileCorePlusExt()
     appler.handleOpencv()
+
+    appler.syncCorePlusExt()
 
 # def installTop(p: Path):
 #     """install the resolved top-level requirements using `uv pip install`"""
