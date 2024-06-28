@@ -3,10 +3,11 @@ from pathlib import Path
 import subprocess
 import sys
 from textwrap import dedent
+from typing import Any
 
 PathLike = os.PathLike[str] | str
 
-def run(cmd: list[str], cwd: str = ".") -> str:
+def run(cmd: list[str], cwd: str = ".") -> subprocess.CompletedProcess[Any]:
     return subprocess.run(
         cmd,
         cwd=cwd,
@@ -14,7 +15,7 @@ def run(cmd: list[str], cwd: str = ".") -> str:
         text=True,
     )
 
-def check_call(cmd: list[str], cwd: str):
+def check_call(cmd: list[str], cwd: str = "."):
     """uses check_call to run pip, as reccomended by the pip maintainers.
     see https://pip.pypa.io/en/stable/user_guide/#using-pip-from-your-program"""
 
@@ -51,7 +52,7 @@ class Appler:
     # cmdInstallTop = [sys.executable, "-m", "uv", "pip", "install", "--extra-index-url", rocmPytorchUrl, "-r", f"{topName}.lock", "--no-deps"]
 
     @staticmethod
-    def compile(reqFiles: list[PathLike], override: PathLike | None = None, out: PathLike | None = None) -> str:
+    def compile(reqFiles: list[PathLike], override: PathLike | None = None, out: PathLike | None = None) -> subprocess.CompletedProcess[Any]:
         cmd = [
             sys.executable,
             "-m",
@@ -96,6 +97,9 @@ class Appler:
         self.extReqFiles = [reqFile for extDir in self.extDirs for reqFile in Appler.findReqFiles(extDir)]
 
     def makeOverride(self):
+        #clean up
+        self.override.unlink(missing_ok=True)
+
         with open(self.override, "w") as f:
             if self.gpu is not None:
                 f.write(Appler.overrideGpu.format(gpu=self.gpu, gpuUrl=self.gpuUrl))
@@ -105,10 +109,13 @@ class Appler:
         coreOverride = Appler.compile(self.coreReqFiles, override=self.override)
 
         with open(self.override, "a") as f:
-            for line in coreOverride:
+            for line in coreOverride.stdout:
                 f.write(line)
 
     def compileCorePlusExt(self):
+        #clean up
+        self.out.unlink(missing_ok=True)
+
         Appler.compile(
             reqFiles=(self.coreReqFiles + self.extReqFiles),
             override=self.override,
