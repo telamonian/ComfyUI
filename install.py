@@ -1,3 +1,4 @@
+import argparse
 import os
 from pathlib import Path
 import subprocess
@@ -256,5 +257,17 @@ def installComfyDeps(cwd: PathLike, gpu: str):
 
     appler.syncCorePlusExt()
 
+def parseArguments():
+    # Create argument parser
+    parser = argparse.ArgumentParser()
+
+    # Positional mandatory arguments
+    parser.add_argument("cwd", help="ComfyUI core directory to run in", type=str)
+    parser.add_argument("gpu", help="GPU type. amd, nvidia, or none", type=str, choices=["amd", "nvidia", "none"])
+
+    return parser.parse_args()
+
 if __name__ == "__main__":
-    installComfyDeps(cwd=".", gpu="amd")
+    args = parseArguments()
+
+    installComfyDeps(cwd=args.cwd, gpu=args.gpu)
