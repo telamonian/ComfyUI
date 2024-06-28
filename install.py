@@ -49,7 +49,6 @@ class Appler:
             reqFiles.extend(p.glob(reqName))
         return reqFiles
 
-
     @staticmethod
     def compile(
         cwd: PathLike,
@@ -246,6 +245,8 @@ class Appler:
                         f.write(line)
 
 def installComfyDeps(cwd: PathLike, gpu: str):
+    check_call(["pip", "install", "uv"])
+
     p = Path(cwd)
     extDirs = [d for d in p.glob("custom_nodes/[!__pycache__]*") if d.is_dir()]
 
