@@ -56,7 +56,8 @@ class Appler:
         cwd: PathLike,
         reqFiles: list[PathLike],
         override: PathLike | None = None,
-        out: PathLike | None = None
+        out: PathLike | None = None,
+        index_strategy: str | None = "unsafe-best-match",
     ) -> subprocess.CompletedProcess[Any]:
         cmd = [
             sys.executable,
@@ -68,6 +69,14 @@ class Appler:
 
         for reqFile in reqFiles:
             cmd.append(str(reqFile))
+
+        # ensures that eg tqdm is latest version, even though an old tqdm is on the amd url
+        # see https://github.com/astral-sh/uv/blob/main/PIP_COMPATIBILITY.md#packages-that-exist-on-multiple-indexes and https://github.com/astral-sh/uv/issues/171
+        if index_strategy is not None:
+            cmd.extend([
+                "--index-strategy",
+                "unsafe-best-match",
+            ])
 
         if override is not None:
             cmd.extend([
@@ -88,6 +97,7 @@ class Appler:
         cwd: PathLike,
         reqFile: list[PathLike],
         override: PathLike | None = None,
+        index_strategy: str | None = "unsafe-best-match",
         dry: bool = False
     ) -> subprocess.CompletedProcess[Any]:
         cmd = [
@@ -99,6 +109,12 @@ class Appler:
             "-r",
             str(reqFile),
         ]
+
+        if index_strategy is not None:
+            cmd.extend([
+                "--index-strategy",
+                "unsafe-best-match",
+            ])
 
         if override is not None:
             cmd.extend([
@@ -116,6 +132,7 @@ class Appler:
         cwd: PathLike,
         reqFile: list[PathLike],
         extraUrl: str | None = None,
+        index_strategy: str | None = "unsafe-best-match",
         dry: bool = False
     ) -> subprocess.CompletedProcess[Any]:
         cmd = [
@@ -126,6 +143,12 @@ class Appler:
             "sync",
             str(reqFile),
         ]
+
+        if index_strategy is not None:
+            cmd.extend([
+                "--index-strategy",
+                "unsafe-best-match",
+            ])
 
         if extraUrl is not None:
             cmd.extend([
