@@ -187,7 +187,6 @@ class Appler:
             if self.gpu is not None:
                 f.write(Appler.overrideGpu.format(gpu=self.gpu, gpuUrl=self.gpuUrl))
                 f.write("\n\n")
-            f.write("# ensure that core comfyui deps take precedence over any 3rd party extension deps\n")
 
         coreOverride = Appler.compile(
             cwd=self.cwd,
@@ -196,8 +195,10 @@ class Appler:
         )
 
         with open(self.override, "a") as f:
+            f.write("# ensure that core comfyui deps take precedence over any 3rd party extension deps\n")
             for line in coreOverride.stdout:
                 f.write(line)
+            f.write("\n")
 
     def compileCorePlusExt(self):
         #clean up
